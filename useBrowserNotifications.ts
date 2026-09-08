@@ -63,8 +63,8 @@ export function useBrowserNotifications() {
       } catch { /* audio may require a prior user gesture */ }
       new Notification(title, {
         body,
-        icon: '/تصميم_بدون_عنوان.png',
-        badge: '/تصميم_بدون_عنوان.png',
+        icon: '/public-logo.png',
+        badge: '/public-logo.png',
         tag: 'king-design',
       });
     } catch {

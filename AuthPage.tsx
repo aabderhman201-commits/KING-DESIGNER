@@ -34,7 +34,7 @@ export function AuthPage({ mode: propMode }: AuthPageProps) {
 
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-3">
-              <img src="/تصميم_بدون_عنوان.png" alt="King Design" className="w-64 h-32 object-contain" />
+              <img src="/public-logo.png" alt="King Design" className="w-64 h-32 object-contain" />
             </div>
           </div>
 
@@ -152,7 +152,7 @@ export function AuthPage({ mode: propMode }: AuthPageProps) {
 
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-3">
-              <img src="/تصميم_بدون_عنوان.png" alt="King Design" className="w-64 h-32 object-contain" />
+              <img src="/public-logo.png" alt="King Design" className="w-64 h-32 object-contain" />
             </div>
           </div>
 
@@ -234,7 +234,7 @@ export function AuthPage({ mode: propMode }: AuthPageProps) {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-3">
-            <img src="/تصميم_بدون_عنوان.png" alt="King Design" className="w-64 h-32 object-contain" />
+            <img src="/public-logo.png" alt="King Design" className="w-64 h-32 object-contain" />
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('whereDesignersUnite')}</p>
         </div>
