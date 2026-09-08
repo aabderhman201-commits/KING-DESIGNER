@@ -54,6 +54,14 @@ export function Avatar({ user, size = 'md', showRing = false, showVerified = fal
           <span className={showRing ? 'p-0.5' : ''}>{initials}</span>
         </div>
       )}
+      {user?.avatar_frame_url && (
+        <img
+          src={user.avatar_frame_url}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none z-10"
+        />
+      )}
       {showVerified && user?.is_verified && (
         <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-success-500 rounded-full border-2 border-white dark:border-surface-dark-card flex items-center justify-center">
           <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">

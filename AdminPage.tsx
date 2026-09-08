@@ -7,7 +7,7 @@ import { Avatar } from '@/components/Avatar';
 import { getDisplayName, getNameColor, getRankName, formatTime } from '@/lib/helpers';
 import type { Profile, Report, Verification, AvatarFrame } from '@/types';
 
-type AdminTab = 'users' | 'reports' | 'verifications' | 'broadcast' | 'frames' | 'settings';
+type AdminTab = 'users' | 'reports' | 'verifications' | 'broadcast' | 'frames' | 'settings' | 'splash' | 'identity';
 
 interface AdminPageProps {
   onNavigate: (page: string, params?: Record<string, string>) => void;
@@ -29,6 +29,8 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
     { id: 'frames', label: t('avatarFrames'), icon: <ImageIcon className="w-4 h-4" /> },
     { id: 'broadcast', label: t('broadcast'), icon: <Bell className="w-4 h-4" /> },
     { id: 'settings', label: 'إعدادات التنزيل والبطاقات', icon: <FileText className="w-4 h-4" /> },
+    { id: 'splash', label: 'شاشات البداية', icon: <Play className="w-4 h-4" /> },
+    { id: 'identity', label: 'بطاقات المستخدمين', icon: <Award className="w-4 h-4" /> },
   ];
 
   return (
@@ -61,6 +63,8 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
       {tab === 'frames' && <AvatarFramesManager />}
       {tab === 'broadcast' && <BroadcastManager />}
       {tab === 'settings' && <AdminSettingsManager />}
+      {tab === 'splash' && <SplashManager />}
+      {tab === 'identity' && <IdentityManager />}
     </div>
   );
 }
@@ -379,7 +383,7 @@ function UserManagementModal({ user, onClose }: { user: Profile; onClose: () => 
           <div className="pt-3 border-t border-king-100 dark:border-surface-dark-border space-y-3">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('customFrame')}</label>
             <label className="btn-secondary text-sm flex items-center justify-center gap-2 cursor-pointer">
-              <Upload className="w-4 h-4" /> {t('uploadGifAvatar')}
+              <Upload className="w-4 h-4" /> {t('uploadFrame')}
               <input type="file" accept="image/gif,.gif" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleUploadAsset(file, 'frame'); }} />
             </label>
             {frameUrl && (
@@ -390,12 +394,6 @@ function UserManagementModal({ user, onClose }: { user: Profile; onClose: () => 
                 </button>
               </div>
             )}
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('uploadGifAvatar')}</label>
-            <label className={`btn-secondary text-sm flex items-center justify-center gap-2 cursor-pointer ${user.vip_level < 3 ? 'opacity-50 pointer-events-none' : ''}`}>
-              <Upload className="w-4 h-4" /> {user.vip_level < 3 ? t('gifVipRequired') : t('uploadGifAvatar')}
-              <input type="file" accept="image/gif,.gif" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleUploadAsset(file, 'gif'); }} />
-            </label>
-            {gifUrl && user.vip_level >= 3 && <img src={gifUrl} alt="gif avatar" className="w-16 h-16 rounded-full object-cover mx-auto" />}
           </div>
 
           {/* Verify */}
@@ -882,4 +880,58 @@ function AdminSettingsManager() {
       <button onClick={save} className="btn-primary">{saved ? 'تم الحفظ' : 'حفظ الإعدادات'}</button>
     </div>
   );
+}
+
+
+function SplashManager() {
+  type SplashRow = { id: string; image_url: string; title: string; subtitle: string; display_order: number; enabled: boolean; duration_seconds: number };
+  const [items, setItems] = useState<SplashRow[]>([]);
+  const [editing, setEditing] = useState<SplashRow | null>(null);
+  const [preview, setPreview] = useState<SplashRow | null>(null);
+  const [saving, setSaving] = useState(false);
+  const empty: SplashRow = { id: '', image_url: '', title: '', subtitle: '', display_order: 0, enabled: true, duration_seconds: 5 };
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('splash_screens').select('*').order('display_order', { ascending: true }).limit(3);
+    setItems((data as SplashRow[]) || []);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const save = async () => {
+    if (!editing?.image_url || !editing.title.trim()) return;
+    setSaving(true);
+    const payload = { image_url: editing.image_url, title: editing.title.trim(), subtitle: editing.subtitle, display_order: editing.display_order, enabled: editing.enabled, duration_seconds: editing.duration_seconds };
+    if (editing.id) await supabase.from('splash_screens').update(payload).eq('id', editing.id);
+    else await supabase.from('splash_screens').insert(payload);
+    setSaving(false); setEditing(null); load();
+  };
+
+  const upload = async (file: File) => {
+    const path = `splash/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from('media').upload(path, file);
+    if (error) return;
+    const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(path);
+    setEditing((value) => value ? { ...value, image_url: publicUrl } : value);
+  };
+
+  return <div className="space-y-3">
+    <div className="flex items-center justify-between"><div><h2 className="font-display font-bold text-lg">3 شاشات بداية للتطبيق</h2><p className="text-xs text-gray-500">إضافة أو تعديل أو حذف أو معاينة مع تشغيل وإيقاف.</p></div><button onClick={() => setEditing({ ...empty, display_order: items.length })} disabled={items.length >= 3} className="btn-primary"><Plus className="w-4 h-4 inline mr-1" /> إضافة</button></div>
+    {editing && <div className="card p-4 space-y-3"><div className="grid md:grid-cols-2 gap-3"><input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} placeholder="العنوان" className="input-field" /><input value={editing.subtitle} onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })} placeholder="الوصف" className="input-field" /></div><input type="number" min="0" max="2" value={editing.display_order} onChange={(e) => setEditing({ ...editing, display_order: Number(e.target.value) })} className="input-field" placeholder="الترتيب 0-2" /><label className="btn-secondary block text-center cursor-pointer">رفع صورة Splash<input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) upload(file); }} /></label>{editing.image_url && <img src={editing.image_url} className="h-28 w-full object-cover rounded-xl" />}</div>}
+    {editing && <div className="flex gap-2"><button onClick={save} disabled={saving} className="btn-primary">{saving ? 'جارٍ الحفظ' : 'حفظ'}</button><button onClick={() => setEditing(null)} className="btn-secondary">إلغاء</button></div>}
+    {items.map((item) => <div key={item.id} className="card p-3 flex items-center gap-3"><img src={item.image_url} className="w-20 h-12 object-cover rounded-lg" /><div className="flex-1 min-w-0"><p className="font-medium truncate">{item.title}</p><p className="text-xs text-gray-500">الترتيب {item.display_order} · {item.enabled ? 'يعمل' : 'متوقف'}</p></div><button onClick={() => setPreview(item)} className="btn-secondary text-xs">معاينة</button><button onClick={async () => { await supabase.from('splash_screens').update({ enabled: !item.enabled }).eq('id', item.id); load(); }} className="btn-secondary text-xs">{item.enabled ? 'إيقاف' : 'تشغيل'}</button><button onClick={() => setEditing(item)} className="btn-secondary text-xs">تعديل</button><button onClick={async () => { await supabase.from('splash_screens').delete().eq('id', item.id); load(); }} className="text-error-500"><Trash2 className="w-4 h-4" /></button></div>)}
+    {preview && <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-5" onClick={() => setPreview(null)}><div className="relative w-full max-w-md h-[70vh] rounded-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}><img src={preview.image_url} className="w-full h-full object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" /><div className="absolute bottom-8 inset-x-5 text-white"><h2 className="text-2xl font-bold">{preview.title}</h2><p>{preview.subtitle}</p></div><button onClick={() => setPreview(null)} className="absolute top-3 right-3 bg-black/50 text-white rounded-full p-2"><X className="w-4 h-4" /></button></div></div>}
+  </div>;
+}
+
+function IdentityManager() {
+  const [users, setUsers] = useState<Profile[]>([]);
+  const [selected, setSelected] = useState<Profile | null>(null);
+  const [cardUrl, setCardUrl] = useState('');
+  const [cardUntil, setCardUntil] = useState('');
+  const [badgeLabel, setBadgeLabel] = useState('');
+  const [badgeUntil, setBadgeUntil] = useState('');
+  useEffect(() => { supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(100).then(({ data }) => setUsers((data as Profile[]) || [])); }, []);
+  const choose = (user: Profile) => { setSelected(user); setCardUrl(user.profile_card_url || ''); setCardUntil(user.profile_card_until?.slice(0, 10) || ''); setBadgeLabel(user.id_badge_label || ''); setBadgeUntil(user.id_badge_until?.slice(0, 10) || ''); };
+  const save = async () => { if (!selected) return; await supabase.from('profiles').update({ profile_card_url: cardUrl || null, profile_card_until: cardUntil ? new Date(`${cardUntil}T23:59:59`).toISOString() : null, id_badge_label: badgeLabel || null, id_badge_until: badgeUntil ? new Date(`${badgeUntil}T23:59:59`).toISOString() : null }).eq('id', selected.id); setUsers(users.map((u) => u.id === selected.id ? { ...u, profile_card_url: cardUrl || null, profile_card_until: cardUntil, id_badge_label: badgeLabel || null, id_badge_until: badgeUntil } : u)); setSelected(null); };
+  return <div className="space-y-3"><div><h2 className="font-display font-bold text-lg">بطاقات الملف وشارات ID</h2><p className="text-xs text-gray-500">اختر مستخدمًا وحدد المحتوى وتاريخ الانتهاء.</p></div>{users.map((user) => <button key={user.id} onClick={() => choose(user)} className="card p-3 w-full flex items-center gap-3 text-right"><Avatar user={user} size="sm" /><span className="flex-1">{getDisplayName(user)}</span><span className="text-xs text-gray-500">ID {user.king_id}</span></button>)}{selected && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setSelected(null)}><div className="card p-5 w-full max-w-lg space-y-3" onClick={(e) => e.stopPropagation()}><h3 className="font-bold">إدارة هوية {getDisplayName(selected)}</h3><input value={cardUrl} onChange={(e) => setCardUrl(e.target.value)} placeholder="رابط بطاقة الملف" className="input-field" /><label className="text-sm block">انتهاء البطاقة<input type="date" value={cardUntil} onChange={(e) => setCardUntil(e.target.value)} className="input-field mt-1" /></label><input value={badgeLabel} onChange={(e) => setBadgeLabel(e.target.value)} placeholder="نص شارة ID" className="input-field" /><label className="text-sm block">انتهاء الشارة<input type="date" value={badgeUntil} onChange={(e) => setBadgeUntil(e.target.value)} className="input-field mt-1" /></label><div className="flex gap-2"><button onClick={save} className="btn-primary">حفظ</button><button onClick={() => setSelected(null)} className="btn-secondary">إلغاء</button></div></div></div>}</div>;
 }
