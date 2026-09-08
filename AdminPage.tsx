@@ -7,7 +7,7 @@ import { Avatar } from '@/components/Avatar';
 import { getDisplayName, getNameColor, getRankName, formatTime } from '@/lib/helpers';
 import type { Profile, Report, Verification, AvatarFrame } from '@/types';
 
-type AdminTab = 'users' | 'reports' | 'verifications' | 'broadcast' | 'frames';
+type AdminTab = 'users' | 'reports' | 'verifications' | 'broadcast' | 'frames' | 'settings';
 
 interface AdminPageProps {
   onNavigate: (page: string, params?: Record<string, string>) => void;
@@ -28,6 +28,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
     { id: 'verifications', label: t('verifications'), icon: <Shield className="w-4 h-4" /> },
     { id: 'frames', label: t('avatarFrames'), icon: <ImageIcon className="w-4 h-4" /> },
     { id: 'broadcast', label: t('broadcast'), icon: <Bell className="w-4 h-4" /> },
+    { id: 'settings', label: 'إعدادات التنزيل والبطاقات', icon: <FileText className="w-4 h-4" /> },
   ];
 
   return (
@@ -59,6 +60,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
       {tab === 'verifications' && <VerificationsManager />}
       {tab === 'frames' && <AvatarFramesManager />}
       {tab === 'broadcast' && <BroadcastManager />}
+      {tab === 'settings' && <AdminSettingsManager />}
     </div>
   );
 }
@@ -827,6 +829,57 @@ function BroadcastManager() {
           {sending ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Send className="w-4 h-4" /> {t('sendToAllUsers')}</>}
         </button>
       </div>
+    </div>
+  );
+}
+
+
+function AdminSettingsManager() {
+  const [enabled, setEnabled] = useState(true);
+  const [watermarkText, setWatermarkText] = useState('KING DESIGNER');
+  const [opacity, setOpacity] = useState('0.65');
+  const [cardDays, setCardDays] = useState('30');
+  const [badgeDays, setBadgeDays] = useState('30');
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('key,value').in('key', ['post_download_watermark', 'profile_card_defaults', 'id_badge_defaults']).then(({ data }) => {
+      for (const row of data || []) {
+        const value = row.value as Record<string, unknown>;
+        if (row.key === 'post_download_watermark') {
+          setEnabled(Boolean(value.enabled));
+          setWatermarkText(String(value.text || 'KING DESIGNER'));
+          setOpacity(String(value.opacity || 0.65));
+        }
+        if (row.key === 'profile_card_defaults') setCardDays(String(value.duration_days || 30));
+        if (row.key === 'id_badge_defaults') setBadgeDays(String(value.duration_days || 30));
+      }
+    });
+  }, []);
+
+  const save = async () => {
+    await Promise.all([
+      supabase.from('admin_settings').upsert({ key: 'post_download_watermark', value: { enabled, text: watermarkText, opacity: Number(opacity), position: 'bottom-right' } }),
+      supabase.from('admin_settings').upsert({ key: 'profile_card_defaults', value: { enabled: true, duration_days: Number(cardDays) } }),
+      supabase.from('admin_settings').upsert({ key: 'id_badge_defaults', value: { enabled: true, duration_days: Number(badgeDays) } }),
+    ]);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
+
+  return (
+    <div className="card p-5 space-y-5">
+      <div><h2 className="font-display font-bold text-lg">التحكم في تنزيل المنشورات</h2><p className="text-xs text-gray-500 mt-1">إعدادات العلامة المائية وبطاقات الهوية.</p></div>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> تفعيل العلامة المائية</label>
+      <div className="grid md:grid-cols-2 gap-3">
+        <label className="text-sm">النص<input value={watermarkText} onChange={(e) => setWatermarkText(e.target.value)} className="input-field mt-1" /></label>
+        <label className="text-sm">الشفافية<input type="number" min="0" max="1" step="0.05" value={opacity} onChange={(e) => setOpacity(e.target.value)} className="input-field mt-1" /></label>
+      </div>
+      <div className="border-t border-king-100 dark:border-surface-dark-border pt-4 grid md:grid-cols-2 gap-3">
+        <label className="text-sm">مدة بطاقة الملف (بالأيام)<input type="number" min="1" value={cardDays} onChange={(e) => setCardDays(e.target.value)} className="input-field mt-1" /></label>
+        <label className="text-sm">مدة شارة ID (بالأيام)<input type="number" min="1" value={badgeDays} onChange={(e) => setBadgeDays(e.target.value)} className="input-field mt-1" /></label>
+      </div>
+      <button onClick={save} className="btn-primary">{saved ? 'تم الحفظ' : 'حفظ الإعدادات'}</button>
     </div>
   );
 }
