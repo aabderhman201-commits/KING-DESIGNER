@@ -37,7 +37,7 @@ function App() {
     try {
       const { data, error } = await supabase.from('profiles').select('*').limit(5);
       if (error) {
-        if (error.code === '42P01' || /relation .* does not exist/i.test(error.message)) {
+        if (error.code === '42P01' || error.code === 'PGRST205' || (error as { status?: number }).status === 404 || /relation .* does not exist/i.test(error.message)) {
           setTables([]);
           setState('success');
           setMessage('تم الوصول إلى المشروع، لكن مخطط public لا يحتوي جداول بعد.');
@@ -52,7 +52,7 @@ function App() {
       }
     } catch (error) {
       setState('error');
-      setMessage(error instanceof Error ? error.message : 'تعذر إكمال الاختبار.');
+      setMessage(error instanceof Error ? `تعذر إكمال الاختبار: ${error.message}` : 'تعذر إكمال الاختبار.');
     } finally {
       setTestedAt(new Date().toLocaleString('ar-EG'));
     }
