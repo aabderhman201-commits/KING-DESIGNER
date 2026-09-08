@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "claude_mcp_add": {
+      "enabled": false
+    },
+    "github": {
+      "enabled": true
+    }
+  }
+}
