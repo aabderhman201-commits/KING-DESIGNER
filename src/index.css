@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { font-family: 'Cairo', Inter, sans-serif; color: #f8fafc; background: #07111f; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; background: #07111f; }
+button { font: inherit; }
+::selection { background: #22d3ee55; }
+@layer components {
+  .panel { @apply rounded-3xl border border-white/10 bg-white/[0.045] shadow-2xl shadow-black/20 backdrop-blur-xl; }
+  .soft-button { @apply rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-slate-200 transition duration-200 hover:-translate-y-0.5 hover:bg-white/10 active:scale-95; }
+  .primary-button { @apply rounded-2xl bg-cyan-400 px-4 py-2.5 text-sm font-bold text-slate-950 transition duration-200 hover:-translate-y-0.5 hover:bg-cyan-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50; }
+}
