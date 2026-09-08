@@ -1,5 +1,5 @@
 import { getInitials, getAvatarUrl, getNameColor, getDisplayName } from '@/lib/helpers';
-import { Shield, Crown, Star, Award } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import type { Profile } from '@/types';
 
 interface AvatarProps {
@@ -22,21 +22,18 @@ const sizeMap = {
 };
 
 function getFrameClass(user: Profile | null | undefined): string {
-  if (!user) return '';
-  if (user.designer_rank === 10) return 'avatar-frame-king';
-  if (user.is_pro) return 'avatar-frame-pro';
-  if (user.is_verified) return 'avatar-frame-verified';
+  // Profile avatars are intentionally unframed; admin cards/badges remain separate.
   return '';
 }
 
 export function Avatar({ user, size = 'md', showRing = false, showVerified = false, showAdmin = false, showBadges = false, onClick }: AvatarProps) {
-  const avatarUrl = getAvatarUrl(user);
   const gifUrl = user?.avatar_gif_url;
+  const showGif = Boolean(gifUrl && (user?.vip_level ?? 0) >= 3);
+  const avatarUrl = showGif ? gifUrl : getAvatarUrl(user);
   const nameColor = getNameColor(user);
   const displayName = getDisplayName(user);
   const initials = getInitials(displayName);
   const frameClass = showRing ? getFrameClass(user) : '';
-  const showGif = gifUrl && (user?.vip_level ?? 0) >= 3;
 
   return (
     <div
@@ -46,12 +43,6 @@ export function Avatar({ user, size = 'md', showRing = false, showVerified = fal
       {avatarUrl && !user?.photo_banned ? (
         <img
           src={avatarUrl}
-          alt={displayName}
-          className={`w-full h-full rounded-full object-cover ${showRing ? 'p-0.5' : ''}`}
-        />
-      ) : showGif ? (
-        <img
-          src={gifUrl}
           alt={displayName}
           className={`w-full h-full rounded-full object-cover ${showRing ? 'p-0.5' : ''}`}
         />
@@ -73,21 +64,6 @@ export function Avatar({ user, size = 'md', showRing = false, showVerified = fal
       {showAdmin && user?.is_admin && (
         <div className="absolute -top-0.5 -left-0.5 w-4 h-4 bg-king-600 rounded-full border-2 border-white dark:border-surface-dark-card flex items-center justify-center" title="Admin">
           <Shield className="w-2.5 h-2.5 text-white" />
-        </div>
-      )}
-      {showBadges && (user?.vip_level || 0) > 0 && (
-        <div className="absolute -top-1 -right-1 badge-vip-tag">
-          <Crown className="w-2 h-2" /> V{user?.vip_level}
-        </div>
-      )}
-      {showBadges && user?.is_pro && (user?.vip_level || 0) === 0 && (
-        <div className="absolute -top-1 -right-1 badge-pro-tag">
-          <Star className="w-2 h-2" /> PRO
-        </div>
-      )}
-      {showBadges && (user?.designer_rank || 0) > 0 && !user?.is_pro && (user?.vip_level || 0) === 0 && (
-        <div className="absolute -top-1 -right-1 badge-rank-tag">
-          <Award className="w-2 h-2" /> R{user?.designer_rank}
         </div>
       )}
     </div>

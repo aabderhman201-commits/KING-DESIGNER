@@ -23,8 +23,25 @@ function AppContent() {
   const { session, profile, loading, isRecoverySession } = useAuth();
   const { t } = useLang();
   useBrowserNotifications();
-  const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [pageParams, setPageParams] = useState<Record<string, string>>({});
+  const [currentPage, setCurrentPage] = useState<Page>(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/u/')) return 'profile';
+    if (path.startsWith('/post/')) return 'post-detail';
+    if (path === '/messages') return 'messages';
+    if (path === '/friends') return 'friends';
+    if (path === '/notifications') return 'notifications';
+    if (path === '/search') return 'search';
+    if (path === '/service-requests') return 'service-requests';
+    if (path === '/verification') return 'verification';
+    if (path === '/admin') return 'admin';
+    return 'home';
+  });
+  const [pageParams, setPageParams] = useState<Record<string, string>>(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/u/')) return { userId: path.slice(3) };
+    if (path.startsWith('/post/')) return { postId: path.slice(6) };
+    return {};
+  });
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [splash, setSplash] = useState<SplashScreen | null>(null);
@@ -55,8 +72,22 @@ function AppContent() {
   const handleNavigate = (page: string, params?: Record<string, string>) => {
     setCurrentPage(page as Page);
     setPageParams(params || {});
+    const routes: Record<string, string> = {
+      home: '/', friends: '/friends', messages: '/messages', notifications: '/notifications',
+      search: '/search', 'service-requests': '/service-requests', verification: '/verification', admin: '/admin',
+    };
+    const path = page === 'profile' && params?.userId ? `/u/${params.userId}`
+      : page === 'post-detail' && params?.postId ? `/post/${params.postId}`
+      : routes[page] || '/';
+    window.history.pushState({ page, params }, '', path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    const onPopState = () => window.location.reload();
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   useEffect(() => {
     if (!profile) return;

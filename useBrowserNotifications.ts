@@ -49,6 +49,18 @@ export function useBrowserNotifications() {
   const showNotification = useCallback((title: string, body: string) => {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     try {
+      try {
+        const audio = new AudioContext();
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+        oscillator.frequency.value = 660;
+        gain.gain.setValueAtTime(0.0001, audio.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.04, audio.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.16);
+        oscillator.connect(gain).connect(audio.destination);
+        oscillator.start();
+        oscillator.stop(audio.currentTime + 0.17);
+      } catch { /* audio may require a prior user gesture */ }
       new Notification(title, {
         body,
         icon: '/تصميم_بدون_عنوان.png',
@@ -88,8 +100,27 @@ export function useBrowserNotifications() {
       )
       .subscribe();
 
+    // Reconcile missed events when the tab was backgrounded or realtime reconnects.
+    const poll = window.setInterval(async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('id, user_id, actor_id, type, entity_type, entity_id, is_read, created_at')
+        .eq('user_id', profile.id)
+        .eq('is_read', false)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      const n = data?.[0] as NotificationPayload | undefined;
+      if (!n) return;
+      const lastSeen = sessionStorage.getItem('king-last-notification');
+      if (lastSeen === n.id) return;
+      sessionStorage.setItem('king-last-notification', n.id);
+      const titles = NOTIFICATION_TITLES[n.type] || NOTIFICATION_TITLES.default;
+      showNotification(`King Design - ${titles[lang]}`, n.type === 'message' ? (n as any).content || titles[lang] : titles[lang]);
+    }, 10000);
+
     return () => {
       supabase.removeChannel(channel);
+      window.clearInterval(poll);
     };
   }, [profile, lang, requestPermission, showNotification]);
 

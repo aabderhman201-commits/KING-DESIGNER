@@ -179,6 +179,18 @@
   box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
 }
 
+/* VIP frames are disabled platform-wide; keep avatars clean and unframed. */
+.avatar-frame-vip,
+.avatar-frame-pro,
+.avatar-frame-verified,
+.avatar-frame-rank,
+.avatar-frame-king {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
 .avatar-frame-pro {
   padding: 3px;
   border-radius: 9999px;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Camera, Copy, Check, MapPin, Calendar, Edit2, X, Star, Plus, Trash2, Briefcase, FileText, Award, Share2, Globe, ShoppingBag, LayoutGrid, Heart, Folder, Upload, MessageSquare, ThumbsUp, ThumbsDown, ChevronLeft, Ban, Flag, ExternalLink, Phone, Crown, ShieldOff, Lock } from 'lucide-react';
+import { Camera, Copy, Check, MapPin, Calendar, Edit2, X, Star, Plus, Trash2, Briefcase, FileText, Award, Share2, Globe, ShoppingBag, LayoutGrid, Heart, Folder, Upload, MessageSquare, ThumbsUp, ThumbsDown, ChevronLeft, Ban, Flag, ExternalLink, Phone, ShieldOff, Lock } from 'lucide-react';
 import { supabase, STORAGE_BUCKETS } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLang } from '@/contexts/LanguageContext';
@@ -354,13 +354,6 @@ export function ProfilePage({ userId, onNavigate }: ProfilePageProps) {
                   <button onClick={() => { setGifPreview(null); setGifFile(null); }} className="bg-gray-700 text-white rounded-lg px-2 py-1 text-xs">{t('cancel')}</button>
                 </div>
               )}
-              {isOwn && (currentUser?.vip_level || 0) < 3 && (
-                <div className="absolute -bottom-12 left-16 z-20">
-                  <div className="bg-gradient-to-r from-king-500 to-king-700 text-white rounded-lg px-2 py-1 text-xs flex items-center gap-1 animate-pulse">
-                    <Crown className="w-3 h-3" /> {t('beVip3')}
-                  </div>
-                </div>
-              )}
               {isOwn && (
                 <label className="absolute -bottom-1 -right-1 z-10 bg-king-500 hover:bg-king-600 text-white rounded-full p-1.5 cursor-pointer transition-colors">
                   <Camera className="w-3.5 h-3.5" />
@@ -374,8 +367,8 @@ export function ProfilePage({ userId, onNavigate }: ProfilePageProps) {
               )}
               {isOwn && (currentUser?.vip_level || 0) >= 3 && (
                 <label className="absolute -top-1 -right-1 z-10 bg-gradient-to-br from-king-400 to-king-600 hover:from-king-500 hover:to-king-700 text-white rounded-full p-1.5 cursor-pointer transition-colors" title={t('uploadGifAvatar')}>
-                  <Crown className="w-3.5 h-3.5" />
-                  <input type="file" accept="image/gif,image/png,image/jpeg" className="hidden" onChange={(e) => {
+                  <Upload className="w-3.5 h-3.5" />
+                  <input type="file" accept="image/gif" className="hidden" onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file || !currentUser) return;
                     setGifFile(file);
@@ -446,9 +439,7 @@ export function ProfilePage({ userId, onNavigate }: ProfilePageProps) {
             {user.is_pro && (
               <span className="badge badge-pro" style={user.pro_color ? { background: user.pro_color } : undefined}>PRO</span>
             )}
-            {user.vip_level > 0 && (
-              <span className="badge badge-vip">VIP {user.vip_level}</span>
-            )}
+            
             {user.designer_rank > 0 && (
               <span className="badge badge-rank">
                 <Award className="w-3 h-3" /> {getRankName(user.designer_rank)}
@@ -888,9 +879,9 @@ export function ProfilePage({ userId, onNavigate }: ProfilePageProps) {
             {user.cv_phone && (
               <div>
                 <h3 className="font-display font-semibold text-gray-900 dark:text-king-50 mb-2">{t('phone')}</h3>
-                <button onClick={() => onNavigate('service-requests')} className="text-sm text-king-600 dark:text-king-400 hover:underline flex items-center gap-1">
+                <a href={`tel:${user.cv_phone}`} className="text-sm text-king-600 dark:text-king-400 hover:underline flex items-center gap-1">
                   <Phone className="w-3.5 h-3.5" /> {user.cv_phone}
-                </button>
+                </a>
               </div>
             )}
             {user.social_links && Object.entries(user.social_links).some(([, value]) => value) && (

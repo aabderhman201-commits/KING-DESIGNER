@@ -1,0 +1,16 @@
+-- KING DESIGNER platform setup applied to Supabase project wxgekvzrqnnmacvsbibk.
+-- The live migration creates:
+-- profiles, roles, user_roles, friendships, posts, comments, likes, stories,
+-- conversations, messages, message_requests, notifications, page_routes,
+-- service_requests, designer_services, portfolio_sections, ratings,
+-- verifications, reports, blocked_users, splash_screens, avatar_frames.
+--
+-- It also enables RLS, adds message_seen RPC, message notifications trigger,
+-- Realtime publication for messages/notifications, stable post slugs, and
+-- public page route records. VIP frame rendering is intentionally disabled in
+-- the client CSS; legacy VIP columns remain for backward-compatible data.
+--
+-- Applied live with Supabase MCP migrations:
+-- create_king_designer_platform_core
+-- complete_king_designer_content_services_storage
+-- add_stable_routes_and_post_slugs
